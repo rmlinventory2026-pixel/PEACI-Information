@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITE Student Dashboard</title>
+    
+    <!-- Import Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="CITE.png">
+    
+    <style>
+        /* Color Palette extracted directly from CITE Logo */
+        :root {
+            --maroon: #841a20; 
+            --teal: #1d4a59;   
+            --tan: #d7b77a;    
+            --white: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --border: rgba(29, 74, 89, 0.2);
+            --text-main: #1a1a1a;
+        }
+
+        /* Enforce Poppins Bold Globally */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700; 
+        }
+
+        body {
+            background-image: linear-gradient(rgba(132, 26, 32, 0.85), rgba(132, 26, 32, 0.85)), url('PEACI-desk.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: var(--maroon);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Mobile Background Adjustment */
+        @media (max-width: 768px) {
+            body {
+                background-image: linear-gradient(rgba(132, 26, 32, 0.85), rgba(132, 26, 32, 0.85)), url('PEACI-mob.png');
+            }
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-bottom: 4px solid var(--tan);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-brand img {
+            width: 60px;
+            height: 60px;
+        }
+
+        .nav-brand h2 {
+            font-size: 1.3rem;
+            color: var(--maroon);
+            line-height: 1.2;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-info {
+            text-align: right;
+            color: var(--teal);
+            margin-right: 0.5rem;
+        }
+
+        .user-info span {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--maroon);
+        }
+
+        .btn-logout {
+            background-color: transparent;
+            color: var(--maroon);
+            border: 2px solid var(--maroon);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-logout:hover {
+            background-color: var(--maroon);
+            color: var(--white);
+        }
+
+        /* --- Dashboard Main Content --- */
+        .dashboard-content {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Welcome Banner & CITE Watermark */
+        .welcome-container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border-left: 8px solid var(--tan);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden; 
+            z-index: 1;
+        }
+
+        .welcome-container::after {
+            content: "CITE";
+            position: absolute;
+            top: 50%;
+            right: 5%;
+            transform: translateY(-50%) rotate(-10deg);
+            font-size: 7rem;
+            color: rgba(29, 74, 89, 0.08); 
+            z-index: -1;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .welcome-container h2 {
+            font-size: 2rem;
+            color: var(--maroon);
+            line-height: 1.2;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .welcome-container .student-meta {
+            font-size: 1.1rem;
+            color: var(--teal);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+        }
+        
+        .welcome-container .student-meta .bullet {
+            color: var(--maroon);
+            opacity: 0.5;
+        }
+
+        .welcome-container .term-meta {
+            font-size: 1rem;
+            color: var(--text-main);
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* 2-Column Grid Layout for Tasks */
+        #task-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        /* Subject Cards & Tables */
+        .subject-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border-top: 5px solid var(--maroon);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .subject-header {
+            font-size: 1.3rem;
+            color: var(--maroon);
+            margin-bottom: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 2px solid var(--tan);
+            padding-bottom: 0.5rem;
+        }
+
+        .subject-header span {
+            font-size: 1rem;
+            color: var(--teal);
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .task-table th, .task-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .task-table th {
+            color: var(--teal);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            width: 60%;
+        }
+
+        .task-table td {
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .task-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .task-table tbody tr:hover {
+            background-color: rgba(215, 183, 122, 0.25);
+        }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            border-top: 5px solid var(--maroon);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-content h3 {
+            color: var(--maroon);
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid var(--tan);
+            padding-bottom: 0.5rem;
+        }
+
+        .modal-content label {
+            color: var(--teal);
+            font-size: 0.95rem;
+        }
+
+        .modal-content select, .modal-content input {
+            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .modal-actions button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background-color: #ccc;
+        }
+
+        .btn-save {
+            background-color: var(--maroon);
+            color: var(--white);
+        }
+
+        .btn-save:hover {
+            background-color: #6a1318;
+        }
+
+        /* Footer */
+        .site-footer {
+            text-align: center;
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            margin-top: auto;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+                text-align: center;
+            }
+            
+            .nav-brand h2 {
+                font-size: 1.1rem;
+            }
+
+            .user-profile {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+            }
+
+            .user-info {
+                width: 100%;
+                text-align: center;
+                margin-right: 0;
+            }
+            
+            #task-container {
+                grid-template-columns: 1fr;
+            }
+
+            .task-table th, .task-table td {
+                padding: 0.8rem 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .welcome-container h2 {
+                font-size: 1.6rem;
+            }
+
+            .welcome-container::after {
+                font-size: 4.5rem;
+                right: 0%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="CITE.png" alt="CITE Logo">
+            <h2>CITE<br>STUDENT DASHBOARD</h2>
+        </div>
+        <div class="user-profile">
+            <div class="user-info">
+                <!-- Hardcoded text acts as a fallback before JS loads -->
+                <div id="display-name">JUAN A. DELA CRUZ</div>
+                <span id="display-id">ID: 2026-00123</span>
+            </div>
+            <!-- Action Buttons -->
+            <button class="btn-logout" onclick="openTaskModal()">AT</button>
+            <button class="btn-logout" onclick="navigateToSchedule()">SCHEDULE</button>
+            <button class="btn-logout" onclick="logout()">LOG OUT</button>
+        </div>
+    </nav>
+
+    <!-- ================= MAIN DASHBOARD ================= -->
+    <main class="dashboard-content">
+        
+        <!-- Welcome Message Block (Includes CITE Watermark) -->
+        <div class="welcome-container">
+            <h2 id="welcome-msg">WELCOME, DELA CRUZ!</h2>
+            <div class="student-meta">
+                <span id="welcome-id">ID Number: 2026-00123</span>
+                <span class="bullet">•</span>
+                <span id="welcome-course">Information Technology</span>
+            </div>
+            <div class="term-meta">School Year 2026-2027 | First Trimester</div>
+        </div>
+        
+        <!-- Tasks Container -->
+        <div id="task-container">
+            <!-- Subject tables injected via JavaScript -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        Processed by PEACI-ICT
+    </footer>
+
+    <!-- ================= ADD TASK MODAL ================= -->
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Add New Task</h3>
+            
+            <label for="task-subject">Subject & Instructor</label>
+            <select id="task-subject">
+                <option value="Chem 111">Chem 111 - Ms. Shahaniya "Ma'am Sha" Edris</option>
+                <option value="ES 111">ES 111 - Mr. Jasim "Sir Jasim" Matanog</option>
+                <option value="FIL 111">FIL 111 - Norjannah "Ma'am Norj" Pandapatan</option>
+                <option value="GEC 111">GEC 111 - Unknown</option>
+                <option value="GEC 112">GEC 112 - Ms. Palman</option>
+                <option value="GEC 113">GEC 113 - Unknown</option>
+                <option value="MATH 111E">MATH 111E - Ms. Nash</option>
+                <option value="PE 111">PE 111 - Unknown</option>
+                <option value="NSTP 111">NSTP 111 - Mr. Azis "Sir Azis" Pandapatan</option>
+            </select>
+            
+            <label for="task-activity">Activity</label>
+            <input type="text" id="task-activity" placeholder="e.g. Chapter 2 Quiz">
+            
+            <label for="task-deadline">Deadline</label>
+            <input type="text" id="task-deadline" placeholder="e.g. Oct 20, 2026">
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeTaskModal()">Cancel</button>
+                <button class="btn-save" onclick="saveNewTask()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // --- DATA LOADING LOGIC ---
+        function loadStudentData() {
+            // Retrieve data set by index.html login page
+            const savedData = localStorage.getItem('citeStudentData') || sessionStorage.getItem('citeStudentData');
+            
+            if (!savedData) return; // Allow page to load visually for testing if no user data
+            
+            const student = JSON.parse(savedData);
+            
+            // 1. Navbar Updates (Full Name & ID)
+            document.getElementById('display-name').textContent = student.fullName.toUpperCase();
+            document.getElementById('display-id').textContent = 'ID: ' + student.studentId;
+            
+            // 2. Dashboard Updates (Welcome Lastname, ID, Course)
+            document.getElementById('welcome-msg').textContent = 'WELCOME, ' + student.lastName.toUpperCase() + '!';
+            document.getElementById('welcome-id').textContent = 'ID Number: ' + student.studentId;
+            document.getElementById('welcome-course').textContent = student.courseSelection;
+        }
+
+        // Instructor Mapping - CHANGE INSTRUCTOR NAMES HERE TO UPDATE EVERYTHING AUTOMATICALLY
+        const instructorMap = {
+            "Chem 111": "Ms. Shahaniya 'Ma'am Sha' Edris",
+            "ES 111": "Mr. Jasim 'Sir Jasim' Matanog",
+            "FIL 111": "Norjannah 'Ma'am Norj' Pandapatan",
+            "GEC 111": "Unknown",
+            "GEC 112": "Ms. Palman",
+            "GEC 113": "Unknown",
+            "MATH 111E": "Ms. Nash",
+            "PE 111": "Unknown",
+            "NSTP 111": "Mr. Azis 'Sir Azis' Pandapatan"
+        };
+
+        // Initialize courseTasks from local storage or set it as a blank array
+        let courseTasks = JSON.parse(localStorage.getItem('citeTasksData')) || [];
+
+        const taskContainer = document.getElementById('task-container');
+
+        // Render task cards dynamically
+        function renderTasks() {
+            taskContainer.innerHTML = ''; 
+            
+            if (courseTasks.length === 0) {
+                taskContainer.innerHTML = '<p style="color: var(--text-main); font-size: 1.1rem; text-align: center; width: 100%; grid-column: span 2;">No tasks added yet. Click "AT" to create your first task.</p>';
+                return;
+            }
+
+            courseTasks.forEach(course => {
+                let tableRows = '';
+                
+                course.activities.forEach(task => {
+                    tableRows += `
+                        <tr>
+                            <td>${task.name}</td>
+                            <td>${task.deadline}</td>
+                        </tr>
+                    `;
+                });
+
+                // DYNAMIC INSTRUCTOR LOOKUP
+                const currentInstructor = instructorMap[course.subject] || course.instructor || "Unknown Instructor";
+
+                const courseHtml = `
+                    <div class="subject-card">
+                        <div class="subject-header">
+                            ${course.subject}
+                            <span>Instructor: ${currentInstructor}</span>
+                        </div>
+                        <table class="task-table">
+                            <thead>
+                                <tr>
+                                    <th>Activity</th>
+                                    <th>Deadline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                taskContainer.insertAdjacentHTML('beforeend', courseHtml);
+            });
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function navigateToSchedule() {
+            window.location.href = 'Schedule.html';
+        }
+
+        // --- ADD TASK LOGIC ---
+        function openTaskModal() {
+            document.getElementById('task-modal').style.display = 'flex';
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal').style.display = 'none';
+        }
+
+        function saveNewTask() {
+            const subjectKey = document.getElementById('task-subject').value;
+            const instructor = instructorMap[subjectKey];
+            const activityName = document.getElementById('task-activity').value;
+            const deadline = document.getElementById('task-deadline').value;
+
+            // Simple validation
+            if (!activityName.trim() || !deadline.trim()) {
+                alert("Please fill out both the Activity and Deadline fields.");
+                return;
+            }
+
+            // Check if the subject card already exists in the current layout
+            const existingCourseIndex = courseTasks.findIndex(c => c.subject === subjectKey);
+
+            if (existingCourseIndex !== -1) {
+                // If subject card exists, add the new activity to it
+                courseTasks[existingCourseIndex].activities.push({ name: activityName, deadline: deadline });
+            } else {
+                // If it doesn't exist, create a new subject card
+                courseTasks.push({
+                    subject: subjectKey,
+                    instructor: instructor,
+                    activities: [{ name: activityName, deadline: deadline }]
+                });
+            }
+
+            // Save automatically to local storage
+            localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+            
+            // Re-render UI and clear modal
+            renderTasks();
+            closeTaskModal();
+            document.getElementById('task-activity').value = '';
+            document.getElementById('task-deadline').value = '';
+        }
+
+        // Redirect to index.html on logout
+        function logout() {
+            localStorage.removeItem('citeStudentData');
+            sessionStorage.removeItem('citeStudentData');
+            window.location.href = 'index.html';
+        }
+
+        // Call initialization functions
+        loadStudentData();
+        renderTasks();
+    </script>
+</body>
+</html>
