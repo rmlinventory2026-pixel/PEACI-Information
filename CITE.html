@@ -337,48 +337,100 @@
             margin-top: auto;
         }
 
-        /* Mobile Responsiveness */
+        /* Mobile Responsiveness - Organized & Clean */
         @media (max-width: 768px) {
+            body {
+                background-image: linear-gradient(rgba(132, 26, 32, 0.90), rgba(132, 26, 32, 0.90)), url('PEACI-mob.png');
+            }
+            
+            .dashboard-content {
+                padding: 1rem; 
+            }
+
             .navbar {
                 flex-direction: column;
                 gap: 1rem;
-                padding: 1rem;
-                text-align: center;
+                padding: 1.5rem 1rem;
             }
             
-            .nav-brand h2 {
-                font-size: 1.1rem;
+            .nav-brand {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
             }
 
+            .nav-brand h2 {
+                font-size: 1.2rem;
+            }
+
+            /* Reorganize User Profile & Buttons */
             .user-profile {
                 width: 100%;
-                justify-content: center;
+                display: flex;
                 flex-wrap: wrap;
-                gap: 0.8rem;
+                justify-content: center;
+                gap: 0.5rem;
             }
 
             .user-info {
                 width: 100%;
                 text-align: center;
-                margin-right: 0;
-            }
-            
-            #task-container {
-                grid-template-columns: 1fr;
+                margin-bottom: 0.5rem;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 0.5rem;
             }
 
-            .task-table th, .task-table td {
-                padding: 0.8rem 0.5rem;
-                font-size: 0.9rem;
+            /* Make buttons uniform for easier tapping */
+            .btn-logout {
+                flex: 1; 
+                min-width: 80px;
+                padding: 0.6rem 0.5rem;
+                font-size: 0.85rem;
+                text-align: center;
+            }
+
+            /* Clean up the Welcome Container */
+            .welcome-container {
+                padding: 1.5rem;
+                text-align: center;
             }
 
             .welcome-container h2 {
-                font-size: 1.6rem;
+                font-size: 1.4rem;
             }
 
+            .welcome-container .student-meta {
+                justify-content: center;
+            }
+
+            /* Remove the distracting watermark on small screens */
             .welcome-container::after {
-                font-size: 4.5rem;
-                right: 0%;
+                display: none; 
+            }
+
+            /* Optimize Task Cards */
+            #task-container {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+
+            .subject-card {
+                padding: 1.2rem;
+            }
+
+            .subject-header {
+                font-size: 1.15rem;
+                align-items: center;
+                text-align: center;
+            }
+
+            .task-table th, .task-table td {
+                padding: 0.8rem 0.2rem;
+                font-size: 0.85rem;
+            }
+            
+            .task-table th {
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -504,7 +556,7 @@
             taskContainer.innerHTML = ''; 
             
             if (courseTasks.length === 0) {
-                taskContainer.innerHTML = '<p style="color: var(--text-main); font-size: 1.1rem; text-align: center; width: 100%; grid-column: span 2;">No tasks added yet. Click "AT" to create your first task.</p>';
+                taskContainer.innerHTML = '<p style="color: var(--text-main); font-size: 1.1rem; text-align: center; width: 100%; grid-column: span 2;">No tasks added yet. Wait for the instructors.</p>';
                 return;
             }
 
