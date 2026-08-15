@@ -516,11 +516,33 @@
         <div class="modal-content" style="text-align: center; align-items: center;">
             <h3>Task Options</h3>
             <p style="color: var(--teal); font-size: 0.9rem; margin-bottom: 1rem;">What would you like to do?</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; width: 100%;">
-                <button class="btn-save" style="flex: 1;" onclick="openAddTaskModal()">Add Task</button>
-                <button class="btn-danger" style="flex: 1;" onclick="openDeleteTaskModal()">Delete Task</button>
+            <div style="display: flex; gap: 1rem; justify-content: center; width: 100%; flex-wrap: wrap;">
+                <button class="btn-save" style="flex: 1; min-width: 100px;" onclick="openAddTaskModal()">Add Task</button>
+                <button class="btn-danger" style="flex: 1; min-width: 100px;" onclick="openDeleteTaskModal()">Delete Task</button>
+                <button class="btn-save" style="flex: 1; min-width: 100px; background-color: var(--tan); color: var(--text-main);" onclick="openUpdateTbaModal()">Update TBAs</button>
             </div>
             <button class="btn-cancel" style="margin-top: 1rem; width: 100%;" onclick="closeAllModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- UPDATE TBA MODAL -->
+    <div id="update-tba-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Update TBA Task</h3>
+            <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">Select a specific TBA task and assign it a new deadline.</p>
+            
+            <label for="tba-task-select">Select TBA Task</label>
+            <select id="tba-task-select">
+                <option value="">-- Choose Task --</option>
+            </select>
+
+            <label for="new-tba-deadline" style="margin-top: 10px;">Set New Deadline</label>
+            <input type="datetime-local" id="new-tba-deadline">
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAllModals()">Cancel</button>
+                <button class="btn-save" onclick="updateSingleTba()">Update Task</button>
+            </div>
         </div>
     </div>
 
@@ -661,15 +683,29 @@
                 
                 course.activities.forEach(task => {
                     let timeLeftLabel = calculateTimeLeft(task.deadline);
-                    let actionHtml = `<button class="btn-complete" onclick="markComplete('${course.subject}', '${task.name}')">Complete</button>`;
+                    let actionHtml = '';
                     let textDecoration = '';
                     let opacity = '1';
                     
+                    // Logic: Appears ONLY 2 hours after the deadline, else wait message.
                     if (task.completed) {
                         timeLeftLabel = `<span style="color: var(--success); font-weight: 900;">COMPLETED</span>`;
                         actionHtml = `<span style="color: gray; font-size: 0.8rem;">Done</span>`;
                         textDecoration = 'line-through';
                         opacity = '0.6';
+                    } else if (task.deadline === "TBA") {
+                        actionHtml = `<span style="color: gray; font-size: 0.8rem;">Pending Deadline</span>`;
+                    } else {
+                        const targetDate = new Date(task.deadline);
+                        const now = new Date();
+                        const diff = now - targetDate; // Positive if current time is past the deadline
+                        const twoHoursInMillis = 2 * 60 * 60 * 1000;
+                        
+                        if (diff >= twoHoursInMillis) {
+                            actionHtml = `<button class="btn-complete" onclick="markComplete('${course.subject}', '${task.name}')">Complete</button>`;
+                        } else {
+                            actionHtml = `<span style="color: gray; font-size: 0.8rem;">On Process</span>`;
+                        }
                     }
                     
                     let formattedDate = task.deadline;
@@ -749,6 +785,32 @@
             document.getElementById('delete-task-modal').style.display = 'flex';
         }
 
+        function openUpdateTbaModal() {
+            closeAllModals();
+            document.getElementById('new-tba-deadline').value = '';
+            
+            const tbaSelect = document.getElementById('tba-task-select');
+            tbaSelect.innerHTML = '<option value="">-- Choose Task --</option>';
+            
+            let tbaCount = 0;
+            
+            courseTasks.forEach((course, courseIndex) => {
+                course.activities.forEach((task, taskIndex) => {
+                    if (task.deadline === "TBA") {
+                        tbaSelect.innerHTML += `<option value="${courseIndex}-${taskIndex}">${course.subject} - ${task.name}</option>`;
+                        tbaCount++;
+                    }
+                });
+            });
+
+            if (tbaCount === 0) {
+                alert("There are currently no tasks marked as TBA.");
+                return;
+            }
+            
+            document.getElementById('update-tba-modal').style.display = 'flex';
+        }
+
         function toggleTbaDeadline() {
             const isChecked = document.getElementById('task-tba-check').checked;
             const deadlineInput = document.getElementById('task-deadline');
@@ -761,7 +823,7 @@
             }
         }
 
-        // --- ADD, COMPLETE & DELETE TASK LOGIC ---
+        // --- ADD, COMPLETE, UPDATE & DELETE TASK LOGIC ---
         function saveNewTask() {
             const subjectKey = document.getElementById('task-subject').value;
             const instructor = instructorMap[subjectKey];
@@ -800,6 +862,33 @@
                     localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
                     renderTasks();
                 }
+            }
+        }
+
+        function updateSingleTba() {
+            const selectedTaskValue = document.getElementById('tba-task-select').value;
+            const newDeadline = document.getElementById('new-tba-deadline').value;
+            
+            if (!selectedTaskValue) {
+                alert("Please select a TBA task to update.");
+                return;
+            }
+            if (!newDeadline) {
+                alert("Please select a valid date and time.");
+                return;
+            }
+            
+            // Extract the indexes stored in the option value
+            const [courseIndex, taskIndex] = selectedTaskValue.split('-');
+            
+            if (courseTasks[courseIndex] && courseTasks[courseIndex].activities[taskIndex]) {
+                courseTasks[courseIndex].activities[taskIndex].deadline = newDeadline;
+                localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+                renderTasks();
+                alert("Successfully updated the TBA task deadline.");
+                closeAllModals();
+            } else {
+                alert("An error occurred while finding the selected task.");
             }
         }
 
