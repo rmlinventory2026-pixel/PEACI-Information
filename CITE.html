@@ -19,6 +19,7 @@
             --card-bg: rgba(255, 255, 255, 0.95);
             --border: rgba(29, 74, 89, 0.2);
             --text-main: #1a1a1a;
+            --success: #28a745;
         }
 
         /* Enforce Poppins Bold Globally */
@@ -226,14 +227,13 @@
 
         .task-table th {
             color: var(--teal);
-            font-size: 1.1rem;
+            font-size: 1rem;
             text-transform: uppercase;
-            /* Removed width: 60% so the 3 columns balance better */
         }
 
         .task-table td {
             color: var(--text-main);
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .task-table tr:last-child td {
@@ -242,6 +242,22 @@
 
         .task-table tbody tr:hover {
             background-color: rgba(215, 183, 122, 0.25);
+        }
+
+        /* Complete Button Style */
+        .btn-complete {
+            background-color: var(--teal);
+            color: var(--white);
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .btn-complete:hover {
+            background-color: #12303a;
         }
 
         /* --- Modal Styles --- */
@@ -292,6 +308,20 @@
             width: 100%;
         }
 
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--teal);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .checkbox-container input {
+            width: auto;
+            cursor: pointer;
+        }
+
         .modal-actions {
             display: flex;
             justify-content: flex-end;
@@ -323,6 +353,15 @@
 
         .btn-save:hover {
             background-color: #6a1318;
+        }
+        
+        .btn-danger {
+            background-color: #d9534f;
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background-color: #c9302c;
         }
 
         /* Footer */
@@ -401,9 +440,10 @@
                 justify-content: center;
             }
 
-            /* Remove the distracting watermark on small screens */
             .welcome-container::after {
-                display: none; 
+                display: block; 
+                font-size: 4rem;
+                right: 2%;
             }
 
             /* Optimize Task Cards */
@@ -428,7 +468,7 @@
             }
             
             .task-table th {
-                font-size: 0.95rem;
+                font-size: 0.90rem;
             }
         }
     </style>
@@ -445,7 +485,7 @@
                 <div id="display-name">JUAN A. DELA CRUZ</div>
                 <span id="display-id">ID: 2026-00123</span>
             </div>
-            <button class="btn-logout" onclick="openTaskModal()">AT</button>
+            <button class="btn-logout" onclick="openActionModal()">AT</button>
             <button class="btn-logout" onclick="navigateToSchedule()">SCHEDULE</button>
             <button class="btn-logout" onclick="logout()">LOG OUT</button>
         </div>
@@ -471,7 +511,21 @@
         Processed by PEACI-ICT
     </footer>
 
-    <div id="task-modal" class="modal-overlay">
+    <!-- ACTION SELECTION MODAL -->
+    <div id="action-modal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center; align-items: center;">
+            <h3>Task Options</h3>
+            <p style="color: var(--teal); font-size: 0.9rem; margin-bottom: 1rem;">What would you like to do?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; width: 100%;">
+                <button class="btn-save" style="flex: 1;" onclick="openAddTaskModal()">Add Task</button>
+                <button class="btn-danger" style="flex: 1;" onclick="openDeleteTaskModal()">Delete Task</button>
+            </div>
+            <button class="btn-cancel" style="margin-top: 1rem; width: 100%;" onclick="closeAllModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ADD TASK MODAL -->
+    <div id="add-task-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Add New Task</h3>
             
@@ -480,11 +534,11 @@
                 <option value="Chem 111">Chem 111 - Ms. Shahaniya "Ma'am Sha" Edris</option>
                 <option value="ES 111">ES 111 - Mr. Jasim "Sir Jasim" Matanog</option>
                 <option value="FIL 111">FIL 111 - Norjannah "Ma'am Norj" Pandapatan</option>
-                <option value="GEC 111">GEC 111 - Unknown</option>
-                <option value="GEC 112">GEC 112 - Ms. Palman</option>
+                <option value="GEC 111">GEC 111 - Ms. Janimah Cosain</option>
+                <option value="GEC 112">GEC 112 - Ms. Johaihma M. Palman</option>
                 <option value="GEC 113">GEC 113 - Unknown</option>
-                <option value="MATH 111E">MATH 111E - Ms. Nash</option>
-                <option value="PE 111">PE 111 - Unknown</option>
+                <option value="MATH 111E">MATH 111E - Ms. Nashifa S. Hadji Isah</option>
+                <option value="PE 111">PE 111 - Ms. Sittieaspia Hadji Hassan</option>
                 <option value="NSTP 111">NSTP 111 - Mr. Azis "Sir Azis" Pandapatan</option>
             </select>
             
@@ -494,9 +548,36 @@
             <label for="task-deadline">Deadline</label>
             <input type="datetime-local" id="task-deadline">
             
+            <label class="checkbox-container">
+                <input type="checkbox" id="task-tba-check" onchange="toggleTbaDeadline()"> 
+                Mark Deadline as TBA (To Be Announced)
+            </label>
+            
             <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeTaskModal()">Cancel</button>
+                <button class="btn-cancel" onclick="closeAllModals()">Cancel</button>
                 <button class="btn-save" onclick="saveNewTask()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE TASK MODAL -->
+    <div id="delete-task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Delete Task</h3>
+            
+            <label for="delete-subject">Select Subject</label>
+            <select id="delete-subject" onchange="populateDeleteTasks()">
+                <option value="">-- Choose Subject --</option>
+            </select>
+            
+            <label for="delete-task">Select Task</label>
+            <select id="delete-task">
+                <option value="">-- Choose Task --</option>
+            </select>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAllModals()">Cancel</button>
+                <button class="btn-danger" onclick="deleteSelectedTask()">Delete</button>
             </div>
         </div>
     </div>
@@ -504,42 +585,41 @@
     <script>
         // --- DATA LOADING LOGIC ---
         function loadStudentData() {
-            // Retrieve data set by index.html login page
             const savedData = localStorage.getItem('citeStudentData') || sessionStorage.getItem('citeStudentData');
             
-            if (!savedData) return; // Allow page to load visually for testing if no user data
+            if (!savedData) return; 
             
             const student = JSON.parse(savedData);
             
-            // 1. Navbar Updates (Full Name & ID)
             document.getElementById('display-name').textContent = student.fullName.toUpperCase();
             document.getElementById('display-id').textContent = 'ID: ' + student.studentId;
             
-            // 2. Dashboard Updates (Welcome Lastname, ID, Course)
             document.getElementById('welcome-msg').textContent = 'WELCOME, ' + student.lastName.toUpperCase() + '!';
             document.getElementById('welcome-id').textContent = 'ID Number: ' + student.studentId;
             document.getElementById('welcome-course').textContent = student.courseSelection;
         }
 
-        // Instructor Mapping - CHANGE INSTRUCTOR NAMES HERE TO UPDATE EVERYTHING AUTOMATICALLY
         const instructorMap = {
             "Chem 111": "Ms. Shahaniya 'Ma'am Sha' Edris",
             "ES 111": "Mr. Jasim 'Sir Jasim' Matanog",
             "FIL 111": "Norjannah 'Ma'am Norj' Pandapatan",
-            "GEC 111": "Unknown",
-            "GEC 112": "Ms. Palman",
+            "GEC 111": "Ms. Janimah Cosain",
+            "GEC 112": "Ms. Johaihma M. Palman",
             "GEC 113": "Unknown",
-            "MATH 111E": "Ms. Nash",
-            "PE 111": "Unknown",
+            "MATH 111E": "Ms. Nashifa S. Hadji Isah",
+            "PE 111": "Ms. Sittieaspia Hadji Hassan",
             "NSTP 111": "Mr. Azis 'Sir Azis' Pandapatan"
         };
 
-        // Initialize courseTasks from local storage or set it as a blank array
         let courseTasks = JSON.parse(localStorage.getItem('citeTasksData')) || [];
         const taskContainer = document.getElementById('task-container');
 
         // --- TIME CALCULATION LOGIC ---
         function calculateTimeLeft(deadlineStr) {
+            if (deadlineStr === "TBA") {
+                return `<span style="color: var(--teal); font-weight: 700;">TBA</span>`;
+            }
+
             const targetDate = new Date(deadlineStr);
             
             if (isNaN(targetDate.getTime())) {
@@ -549,23 +629,19 @@
             const now = new Date();
             const diff = targetDate - now;
 
-            // If the difference is less than or equal to 0, the deadline has passed
             if (diff <= 0) {
                 return `<span style="color: var(--maroon); font-weight: 900;">OVERLAPSED</span>`;
             }
 
-            // Calculate time breakdown
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / 1000 / 60) % 60);
 
-            // Format the output string dynamically
             let timeString = "";
             if (days > 0) timeString += `${days}d `;
             if (hours > 0 || days > 0) timeString += `${hours}h `;
             timeString += `${minutes}m left`;
 
-            // Highlight tight deadlines (e.g., under 24 hours) in maroon, otherwise teal
             const color = days < 1 ? 'var(--maroon)' : 'var(--teal)';
 
             return `<span style="color: ${color};">${timeString}</span>`;
@@ -584,24 +660,36 @@
                 let tableRows = '';
                 
                 course.activities.forEach(task => {
-                    const timeLeftLabel = calculateTimeLeft(task.deadline);
+                    let timeLeftLabel = calculateTimeLeft(task.deadline);
+                    let actionHtml = `<button class="btn-complete" onclick="markComplete('${course.subject}', '${task.name}')">Complete</button>`;
+                    let textDecoration = '';
+                    let opacity = '1';
                     
-                    // Format the date so it looks nice in the table instead of raw HTML data
-                    const dateObj = new Date(task.deadline);
-                    const formattedDate = !isNaN(dateObj) 
-                        ? dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
-                        : task.deadline;
+                    if (task.completed) {
+                        timeLeftLabel = `<span style="color: var(--success); font-weight: 900;">COMPLETED</span>`;
+                        actionHtml = `<span style="color: gray; font-size: 0.8rem;">Done</span>`;
+                        textDecoration = 'line-through';
+                        opacity = '0.6';
+                    }
+                    
+                    let formattedDate = task.deadline;
+                    if (task.deadline !== "TBA") {
+                        const dateObj = new Date(task.deadline);
+                        formattedDate = !isNaN(dateObj) 
+                            ? dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                            : task.deadline;
+                    }
 
                     tableRows += `
-                        <tr>
-                            <td style="width: 40%;">${task.name}</td>
+                        <tr style="opacity: ${opacity};">
+                            <td style="width: 35%; text-decoration: ${textDecoration};">${task.name}</td>
                             <td>${formattedDate}</td>
                             <td>${timeLeftLabel}</td>
+                            <td>${actionHtml}</td>
                         </tr>
                     `;
                 });
 
-                // DYNAMIC INSTRUCTOR LOOKUP
                 const currentInstructor = instructorMap[course.subject] || course.instructor || "Unknown Instructor";
 
                 const courseHtml = `
@@ -616,6 +704,7 @@
                                     <th>Activity</th>
                                     <th>Deadline</th>
                                     <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -629,69 +718,154 @@
             });
         }
 
-        // --- NAVIGATION LOGIC ---
+        // --- NAVIGATION & MODAL LOGIC ---
         function navigateToSchedule() {
             window.location.href = 'Schedule.html';
         }
 
-        // --- ADD TASK LOGIC ---
-        function openTaskModal() {
-            document.getElementById('task-modal').style.display = 'flex';
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.style.display = 'none';
+            });
         }
 
-        function closeTaskModal() {
-            document.getElementById('task-modal').style.display = 'none';
+        function openActionModal() {
+            closeAllModals();
+            document.getElementById('action-modal').style.display = 'flex';
         }
 
+        function openAddTaskModal() {
+            closeAllModals();
+            document.getElementById('task-activity').value = '';
+            document.getElementById('task-deadline').value = '';
+            document.getElementById('task-deadline').disabled = false;
+            document.getElementById('task-tba-check').checked = false;
+            document.getElementById('add-task-modal').style.display = 'flex';
+        }
+
+        function openDeleteTaskModal() {
+            closeAllModals();
+            populateDeleteSubjects();
+            document.getElementById('delete-task-modal').style.display = 'flex';
+        }
+
+        function toggleTbaDeadline() {
+            const isChecked = document.getElementById('task-tba-check').checked;
+            const deadlineInput = document.getElementById('task-deadline');
+            
+            if (isChecked) {
+                deadlineInput.value = '';
+                deadlineInput.disabled = true;
+            } else {
+                deadlineInput.disabled = false;
+            }
+        }
+
+        // --- ADD, COMPLETE & DELETE TASK LOGIC ---
         function saveNewTask() {
             const subjectKey = document.getElementById('task-subject').value;
             const instructor = instructorMap[subjectKey];
             const activityName = document.getElementById('task-activity').value;
-            const deadline = document.getElementById('task-deadline').value;
+            const isTba = document.getElementById('task-tba-check').checked;
+            const deadline = isTba ? "TBA" : document.getElementById('task-deadline').value;
 
-            // Simple validation
-            if (!activityName.trim() || !deadline.trim()) {
-                alert("Please fill out both the Activity and Deadline fields.");
+            if (!activityName.trim() || (!isTba && !deadline.trim())) {
+                alert("Please fill out both the Activity and Deadline fields (or select TBA).");
                 return;
             }
 
-            // Check if the subject card already exists in the current layout
             const existingCourseIndex = courseTasks.findIndex(c => c.subject === subjectKey);
 
             if (existingCourseIndex !== -1) {
-                // If subject card exists, add the new activity to it
-                courseTasks[existingCourseIndex].activities.push({ name: activityName, deadline: deadline });
+                courseTasks[existingCourseIndex].activities.push({ name: activityName, deadline: deadline, completed: false });
             } else {
-                // If it doesn't exist, create a new subject card
                 courseTasks.push({
                     subject: subjectKey,
                     instructor: instructor,
-                    activities: [{ name: activityName, deadline: deadline }]
+                    activities: [{ name: activityName, deadline: deadline, completed: false }]
                 });
             }
 
-            // Save automatically to local storage
             localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
-            
-            // Re-render UI and clear modal
             renderTasks();
-            closeTaskModal();
-            document.getElementById('task-activity').value = '';
-            document.getElementById('task-deadline').value = '';
+            closeAllModals();
         }
 
-        // Redirect to index.html on logout
+        function markComplete(subjectName, taskName) {
+            const courseIndex = courseTasks.findIndex(c => c.subject === subjectName);
+            if (courseIndex > -1) {
+                const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
+                if (taskIndex > -1) {
+                    courseTasks[courseIndex].activities[taskIndex].completed = true;
+                    localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+                    renderTasks();
+                }
+            }
+        }
+
+        function populateDeleteSubjects() {
+            const subjSelect = document.getElementById('delete-subject');
+            subjSelect.innerHTML = '<option value="">-- Choose Subject --</option>';
+            
+            courseTasks.forEach(course => {
+                if (course.activities.length > 0) {
+                    subjSelect.innerHTML += `<option value="${course.subject}">${course.subject}</option>`;
+                }
+            });
+            
+            document.getElementById('delete-task').innerHTML = '<option value="">-- Choose Task --</option>';
+        }
+
+        function populateDeleteTasks() {
+            const subjSelect = document.getElementById('delete-subject').value;
+            const taskSelect = document.getElementById('delete-task');
+            taskSelect.innerHTML = '<option value="">-- Choose Task --</option>';
+            
+            if (subjSelect) {
+                const course = courseTasks.find(c => c.subject === subjSelect);
+                if (course) {
+                    course.activities.forEach(task => {
+                        taskSelect.innerHTML += `<option value="${task.name}">${task.name}</option>`;
+                    });
+                }
+            }
+        }
+
+        function deleteSelectedTask() {
+            const subjectName = document.getElementById('delete-subject').value;
+            const taskName = document.getElementById('delete-task').value;
+
+            if (!subjectName || !taskName) {
+                alert("Please select both a subject and a task to delete.");
+                return;
+            }
+
+            const courseIndex = courseTasks.findIndex(c => c.subject === subjectName);
+            if (courseIndex > -1) {
+                const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
+                if (taskIndex > -1) {
+                    courseTasks[courseIndex].activities.splice(taskIndex, 1);
+                    
+                    if (courseTasks[courseIndex].activities.length === 0) {
+                        courseTasks.splice(courseIndex, 1);
+                    }
+                    
+                    localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+                    renderTasks();
+                    closeAllModals();
+                }
+            }
+        }
+
         function logout() {
             localStorage.removeItem('citeStudentData');
             sessionStorage.removeItem('citeStudentData');
             window.location.href = 'index.html';
         }
 
-        // Call initialization functions
         loadStudentData();
         renderTasks();
-
-        // Refresh the tasks every 60 seconds (60000ms) to update the live countdown
+        
         setInterval(renderTasks, 60000); 
     </script>
 </body>
