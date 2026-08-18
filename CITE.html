@@ -556,7 +556,7 @@
             </div>
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeAllModals()">Close</button>
-                <button class="btn-danger" onclick="clearArchives()">Clear All</button>
+                <button id="btn-clear-archive" class="btn-danger" style="opacity: 0.5; cursor: not-allowed;" disabled onclick="clearSelectedArchives()">Clear Selected</button>
             </div>
         </div>
     </div>
@@ -795,6 +795,7 @@
         }
 
         // --- RENDER TASKS LOGIC ---
+        // --- RENDER TASKS LOGIC ---
         function renderTasks() {
             taskContainer.innerHTML = ''; 
             
@@ -817,18 +818,23 @@
                     const safeTaskName = task.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
                     if (task.deadline === "TBA") {
-                        actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
+                        // No "Complete" button for TBA tasks
+                        actionHtml = ''; 
                         rowClass = 'highlight-tba'; 
                     } else {
                         const targetDate = new Date(task.deadline);
                         const now = new Date();
+                        const diff = targetDate - now;
                         const oneDayInMillis = 24 * 60 * 60 * 1000;
                         
-                        if (targetDate - now > 0 && targetDate - now <= oneDayInMillis) {
+                        if (diff > 0 && diff <= oneDayInMillis) {
                             rowClass = 'highlight-near'; 
                         }
 
-                        actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
+                        // Only show the "Complete" button if the deadline is overlapsed
+                        if (diff <= 0) {
+                            actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
+                        }
                     }
                     
                     let formattedDate = task.deadline;
