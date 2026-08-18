@@ -383,6 +383,16 @@
             margin-top: auto;
         }
 
+        /* Fix for Archive Table Checkboxes */
+        #archive-container input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            cursor: pointer;
+            transform: scale(1.2);
+            margin: 0 auto;
+            display: block;
+        }
+
         /* Mobile Responsiveness - Organized & Clean */
         @media (max-width: 768px) {
             body {
@@ -772,16 +782,13 @@
             if (courseIndex > -1) {
                 const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
                 if (taskIndex > -1) {
-                    // Extract task and mark completed
                     const completedTask = courseTasks[courseIndex].activities.splice(taskIndex, 1)[0];
                     completedTask.completed = true;
                     completedTask.completedDate = new Date().toISOString();
                     completedTask.dateArchived = completedTask.completedDate;
                     
-                    // Directly push to Archive
                     archivedTasks.push({ subject: subjectName, task: completedTask });
                     
-                    // Clean up subject card if no remaining tasks
                     if (courseTasks[courseIndex].activities.length === 0) {
                         courseTasks.splice(courseIndex, 1);
                     }
@@ -794,7 +801,6 @@
             }
         }
 
-        // --- RENDER TASKS LOGIC ---
         // --- RENDER TASKS LOGIC ---
         function renderTasks() {
             taskContainer.innerHTML = ''; 
@@ -818,7 +824,6 @@
                     const safeTaskName = task.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
                     if (task.deadline === "TBA") {
-                        // No "Complete" button for TBA tasks
                         actionHtml = ''; 
                         rowClass = 'highlight-tba'; 
                     } else {
@@ -831,7 +836,6 @@
                             rowClass = 'highlight-near'; 
                         }
 
-                        // Only show the "Complete" button if the deadline is overlapsed
                         if (diff <= 0) {
                             actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
                         }
@@ -914,15 +918,34 @@
             document.getElementById('archive-modal').style.display = 'flex';
         }
 
+        // --- ARCHIVE RENDERING & DELETION LOGIC ---
         function renderArchives() {
             const container = document.getElementById('archive-container');
+            const clearBtn = document.getElementById('btn-clear-archive');
+            
+            clearBtn.disabled = true;
+            clearBtn.style.opacity = '0.5';
+            clearBtn.style.cursor = 'not-allowed';
+
             if (archivedTasks.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: gray; font-size: 0.9rem;">No archived tasks found.</p>';
                 return;
             }
             
-            let html = '<table class="task-table" style="font-size: 0.85rem;"><thead><tr><th>Subject</th><th>Activity</th><th>Date Archived</th></tr></thead><tbody>';
-            archivedTasks.forEach(item => {
+            let html = `
+                <table class="task-table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;"><input type="checkbox" id="select-all-archives" onclick="toggleAllArchives(this)"></th>
+                            <th>Subject</th>
+                            <th>Activity</th>
+                            <th>Date Archived</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            archivedTasks.forEach((item, index) => {
                 const dateArchivedStr = (item.task && item.task.dateArchived) || item.dateArchived || new Date().toISOString();
                 const dateObj = new Date(dateArchivedStr);
                 const formattedDate = !isNaN(dateObj) 
@@ -930,16 +953,63 @@
                     : 'Unknown Date';
 
                 const taskName = item.task ? item.task.name : 'Unknown Task';
-                html += `<tr><td>${item.subject}</td><td>${taskName}</td><td>${formattedDate}</td></tr>`;
+                html += `
+                    <tr>
+                        <td><input type="checkbox" class="archive-checkbox" value="${index}" onchange="checkArchiveSelection()"></td>
+                        <td>${item.subject}</td>
+                        <td>${taskName}</td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                `;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
 
-        function clearArchives() {
-            if (archivedTasks.length === 0) return;
-            if (confirm("Are you sure you want to permanently clear all archived tasks?")) {
-                archivedTasks = [];
+        function toggleAllArchives(source) {
+            const checkboxes = document.querySelectorAll('.archive-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = source.checked;
+            });
+            checkArchiveSelection();
+        }
+
+        function checkArchiveSelection() {
+            const checkboxes = document.querySelectorAll('.archive-checkbox');
+            const clearBtn = document.getElementById('btn-clear-archive');
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            
+            if (anyChecked) {
+                clearBtn.disabled = false;
+                clearBtn.style.opacity = '1';
+                clearBtn.style.cursor = 'pointer';
+            } else {
+                clearBtn.disabled = true;
+                clearBtn.style.opacity = '0.5';
+                clearBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        function clearSelectedArchives() {
+            const checkboxes = document.querySelectorAll('.archive-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            let taskListString = "";
+            selectedIndices.forEach(index => {
+                const item = archivedTasks[index];
+                const taskName = item.task ? item.task.name : 'Unknown Task';
+                taskListString += `\n• ${item.subject} - ${taskName}`;
+            });
+
+            const confirmMessage = `Are you sure all of these tasks will be deleted?${taskListString}`;
+
+            if (confirm(confirmMessage)) {
+                selectedIndices.sort((a, b) => b - a).forEach(index => {
+                    archivedTasks.splice(index, 1);
+                });
+
                 localStorage.setItem('citeArchiveData', JSON.stringify(archivedTasks));
                 renderArchives();
             }
