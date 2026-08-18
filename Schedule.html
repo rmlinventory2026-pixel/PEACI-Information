@@ -413,7 +413,13 @@
       background: rgba(0, 0, 0, 0.2);
     }
 
-    .btn-delete-card {
+    /* Grouping Card Buttons */
+    .card-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-action-card {
       background: transparent;
       border: none;
       color: inherit;
@@ -427,7 +433,7 @@
       transition: all 0.2s;
     }
 
-    .btn-delete-card:hover {
+    .btn-action-card:hover {
       opacity: 1;
       background: rgba(0, 0, 0, 0.2);
     }
@@ -804,7 +810,7 @@
   <div class="modal-overlay" id="classModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Add New Subject</h2>
+        <h2 id="modalTitle">Add New Subject</h2>
         <button class="btn-close" id="closeModalBtn" aria-label="Close modal">&times;</button>
       </div>
       <div class="modal-body">
@@ -842,6 +848,7 @@
   const colors = ['card-maroon', 'card-teal', 'card-tan', 'card-gray'];
   
   let scheduleClasses = [];
+  let editingClassId = null; // Variable to track which class is currently being edited
 
   // ==========================================
   // 1. SUBJECT DATABASE (Requirement 1 & 2)
@@ -849,7 +856,7 @@
   // ==========================================
   const subjectDatabase = {
     "ES 111": { desc: "CE Orientation", instructor: "Mr. Jasim M. Matanog" },
-    "CHEM 111": { desc: "Chemistry for Engineers", instructor: "Ms. Shahaniya Edris" },
+    "CHEM 111": { desc: "Chemistry for Engineers", instructor: "Ms. Sahaniah Edris" },
     "FIL 111": { desc: "Wika at Kultura sa Mapayapang Lipunan", instructor: "Ms. Norjannah S. Pandapatan" },
     "GEC 111": { desc: "Science, Technology and Society", instructor: "Ms. Janimah Cosain" },
     "GEC 112": { desc: "Reading in the Philippine History", instructor: "Ms. Johaihma M. Palman" },
@@ -956,9 +963,14 @@
               </div>
               <div class="card-footer-row">
                 <span class="badge">Code ${day}-${timeSlot}</span>
-                <button class="btn-delete-card" aria-label="Delete class" title="Delete class" onclick="deleteClass('${cls.id}')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
-                </button>
+                <div class="card-actions">
+                  <button class="btn-action-card" aria-label="Edit class" title="Edit class" onclick="editClass('${cls.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+                  <button class="btn-action-card" aria-label="Delete class" title="Delete class" onclick="deleteClass('${cls.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
+                  </button>
+                </div>
               </div>
             `;
             targetCell.appendChild(cardHTML);
@@ -975,6 +987,8 @@
   const roomInput = document.getElementById('roomInput');
   const instructorInput = document.getElementById('instructorInput');
   const scheduleCodeInput = document.getElementById('scheduleCodeInput');
+  const modalTitle = document.getElementById('modalTitle');
+  const submitBtn = document.getElementById('submitBtn');
 
   // ==========================================
   // Auto-fill Logic for Modal (Requirement 1)
@@ -999,10 +1013,35 @@
     roomInput.value = '';
     instructorInput.value = '';
     scheduleCodeInput.value = '';
+    
+    // Reset Edit State Variables and UI
+    editingClassId = null;
+    modalTitle.textContent = 'Add New Subject';
+    submitBtn.textContent = 'Save to Schedule';
   };
 
   document.getElementById('closeModalBtn').addEventListener('click', closeClassModal);
   document.getElementById('cancelBtn').addEventListener('click', closeClassModal);
+
+  // New Edit Function
+  window.editClass = function(id) {
+    const cls = scheduleClasses.find(c => c.id === id);
+    if (!cls) return;
+
+    // Populate Modal with existing class data
+    subjectCodeInput.value = cls.codeText;
+    subjectDescInput.value = cls.descText;
+    roomInput.value = cls.room;
+    instructorInput.value = cls.instructor;
+    scheduleCodeInput.value = cls.schedCode;
+
+    // Update state and UI for editing
+    editingClassId = id;
+    modalTitle.textContent = 'Edit Subject';
+    submitBtn.textContent = 'Save Changes';
+
+    classModal.classList.add('active');
+  };
 
   document.getElementById('submitBtn').addEventListener('click', () => {
     const codeText = subjectCodeInput.value.trim().toUpperCase();
@@ -1033,15 +1072,28 @@
       return;
     }
 
-    scheduleClasses.push({
-      id: 'cls_' + Date.now(),
-      codeText,
-      descText,
-      room,
-      instructor,
-      schedCode,
-      colorClass: colors[Math.floor(Math.random() * colors.length)]
-    });
+    if (editingClassId) {
+      // Find and update existing class
+      const clsIndex = scheduleClasses.findIndex(c => c.id === editingClassId);
+      if (clsIndex > -1) {
+        scheduleClasses[clsIndex].codeText = codeText;
+        scheduleClasses[clsIndex].descText = descText;
+        scheduleClasses[clsIndex].room = room;
+        scheduleClasses[clsIndex].instructor = instructor;
+        scheduleClasses[clsIndex].schedCode = schedCode;
+      }
+    } else {
+      // Add new class
+      scheduleClasses.push({
+        id: 'cls_' + Date.now(),
+        codeText,
+        descText,
+        room,
+        instructor,
+        schedCode,
+        colorClass: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
 
     autoSave();
     renderAll();

@@ -244,6 +244,15 @@
             background-color: rgba(215, 183, 122, 0.25);
         }
 
+        /* Highlight Classes */
+        .highlight-tba {
+            background-color: rgba(40, 167, 69, 0.2) !important; /* Green */
+        }
+        
+        .highlight-near {
+            background-color: rgba(132, 26, 32, 0.2) !important; /* Maroon */
+        }
+
         /* Complete Button Style */
         .btn-complete {
             background-color: var(--teal);
@@ -299,7 +308,7 @@
             font-size: 0.95rem;
         }
 
-        .modal-content select, .modal-content input {
+        .modal-content select, .modal-content input, .modal-content textarea {
             padding: 0.7rem;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -400,7 +409,6 @@
                 font-size: 1.2rem;
             }
 
-            /* Reorganize User Profile & Buttons */
             .user-profile {
                 width: 100%;
                 display: flex;
@@ -417,7 +425,6 @@
                 padding-bottom: 0.5rem;
             }
 
-            /* Make buttons uniform for easier tapping */
             .btn-logout {
                 flex: 1; 
                 min-width: 80px;
@@ -426,7 +433,6 @@
                 text-align: center;
             }
 
-            /* Clean up the Welcome Container */
             .welcome-container {
                 padding: 1.5rem;
                 text-align: center;
@@ -446,7 +452,6 @@
                 right: 2%;
             }
 
-            /* Optimize Task Cards */
             #task-container {
                 grid-template-columns: 1fr;
                 gap: 1.2rem;
@@ -504,7 +509,7 @@
         </div>
         
         <div id="task-container">
-            </div>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -520,8 +525,39 @@
                 <button class="btn-save" style="flex: 1; min-width: 100px;" onclick="openAddTaskModal()">Add Task</button>
                 <button class="btn-danger" style="flex: 1; min-width: 100px;" onclick="openDeleteTaskModal()">Delete Task</button>
                 <button class="btn-save" style="flex: 1; min-width: 100px; background-color: var(--tan); color: var(--text-main);" onclick="openUpdateTbaModal()">Update TBAs</button>
+                <button class="btn-save" style="flex: 1; min-width: 100px; background-color: #444; color: white;" onclick="openArchiveModal()">Archives</button>
             </div>
             <button class="btn-cancel" style="margin-top: 1rem; width: 100%;" onclick="closeAllModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- VIEW TASK DESCRIPTION MODAL -->
+    <div id="view-desc-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="desc-modal-title">Task Details</h3>
+            <p id="desc-modal-subject" style="color: var(--teal); font-size: 0.85rem; margin-top: -0.5rem;"></p>
+            
+            <label style="margin-top: 0.5rem;">Description / Instructions</label>
+            <div id="desc-modal-body" style="background: rgba(29, 74, 89, 0.05); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--teal); color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto;">
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAllModals()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARCHIVE MODAL -->
+    <div id="archive-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 650px;">
+            <h3>Archived Tasks</h3>
+            <div id="archive-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
+                <!-- Archives list generated here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAllModals()">Close</button>
+                <button class="btn-danger" onclick="clearArchives()">Clear All</button>
+            </div>
         </div>
     </div>
 
@@ -553,7 +589,7 @@
             
             <label for="task-subject">Subject & Instructor</label>
             <select id="task-subject">
-                <option value="Chem 111">Chem 111 - Ms. Shahaniya "Ma'am Sha" Edris</option>
+                <option value="Chem 111">Chem 111 - Ms. Sahaniah "Ma'am Sha" Edris</option>
                 <option value="ES 111">ES 111 - Mr. Jasim "Sir Jasim" Matanog</option>
                 <option value="FIL 111">FIL 111 - Norjannah "Ma'am Norj" Pandapatan</option>
                 <option value="GEC 111">GEC 111 - Ms. Janimah Cosain</option>
@@ -564,8 +600,11 @@
                 <option value="NSTP 111">NSTP 111 - Mr. Azis "Sir Azis" Pandapatan</option>
             </select>
             
-            <label for="task-activity">Activity</label>
+            <label for="task-activity">Activity Title</label>
             <input type="text" id="task-activity" placeholder="e.g. Chapter 2 Quiz">
+
+            <label for="task-description">Description (Optional)</label>
+            <textarea id="task-description" rows="3" placeholder="e.g. Read pages 45-50 and submit in PDF format..." style="resize: vertical;"></textarea>
             
             <label for="task-deadline">Deadline</label>
             <input type="datetime-local" id="task-deadline">
@@ -622,7 +661,7 @@
         }
 
         const instructorMap = {
-            "Chem 111": "Ms. Shahaniya 'Ma'am Sha' Edris",
+            "Chem 111": "Ms. Sahaniah 'Ma'am Sha' Edris",
             "ES 111": "Mr. Jasim 'Sir Jasim' Matanog",
             "FIL 111": "Norjannah 'Ma'am Norj' Pandapatan",
             "GEC 111": "Ms. Janimah Cosain",
@@ -634,6 +673,7 @@
         };
 
         let courseTasks = JSON.parse(localStorage.getItem('citeTasksData')) || [];
+        let archivedTasks = JSON.parse(localStorage.getItem('citeArchiveData')) || [];
         const taskContainer = document.getElementById('task-container');
 
         // --- TIME CALCULATION LOGIC ---
@@ -669,6 +709,91 @@
             return `<span style="color: ${color};">${timeString}</span>`;
         }
 
+        // --- VIEW TASK DESCRIPTION LOGIC ---
+        function showTaskDescription(e, subjectName, taskName) {
+            if (e.target.tagName.toLowerCase() === 'button') return;
+
+            const course = courseTasks.find(c => c.subject === subjectName);
+            if (course) {
+                const task = course.activities.find(t => t.name === taskName);
+                if (task) {
+                    document.getElementById('desc-modal-title').textContent = task.name;
+                    document.getElementById('desc-modal-subject').textContent = `${course.subject} • Instructor: ${instructorMap[course.subject] || course.instructor || "Unknown"}`;
+                    document.getElementById('desc-modal-body').textContent = task.description && task.description.trim() ? task.description : "No description provided for this task.";
+                    
+                    closeAllModals();
+                    document.getElementById('view-desc-modal').style.display = 'flex';
+                }
+            }
+        }
+
+        // --- LONG PRESS TO ARCHIVE LOGIC ---
+        let pressTimer;
+        
+        function handlePointerDown(e, subject, taskName) {
+            if (e.target.tagName.toLowerCase() === 'button') return;
+            clearTimeout(pressTimer); 
+            
+            pressTimer = setTimeout(() => {
+                archiveTask(subject, taskName);
+            }, 800); 
+        }
+
+        function handlePointerUp() {
+            clearTimeout(pressTimer);
+        }
+
+        function archiveTask(subjectName, taskName) {
+            if(!confirm(`Do you want to archive this task: ${taskName}?`)) return;
+            
+            const courseIndex = courseTasks.findIndex(c => c.subject === subjectName);
+            if (courseIndex > -1) {
+                const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
+                if (taskIndex > -1) {
+                    const archivedItem = courseTasks[courseIndex].activities.splice(taskIndex, 1)[0];
+                    archivedItem.dateArchived = archivedItem.completedDate || new Date().toISOString();
+                    
+                    archivedTasks.push({ subject: subjectName, task: archivedItem });
+                    
+                    if (courseTasks[courseIndex].activities.length === 0) {
+                        courseTasks.splice(courseIndex, 1);
+                    }
+                    
+                    localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+                    localStorage.setItem('citeArchiveData', JSON.stringify(archivedTasks));
+                    renderTasks();
+                }
+            }
+        }
+
+        // --- COMPLETE AND DIRECT TO ARCHIVE LOGIC ---
+        function markCompleteAndArchive(subjectName, taskName) {
+            const courseIndex = courseTasks.findIndex(c => c.subject === subjectName);
+            if (courseIndex > -1) {
+                const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
+                if (taskIndex > -1) {
+                    // Extract task and mark completed
+                    const completedTask = courseTasks[courseIndex].activities.splice(taskIndex, 1)[0];
+                    completedTask.completed = true;
+                    completedTask.completedDate = new Date().toISOString();
+                    completedTask.dateArchived = completedTask.completedDate;
+                    
+                    // Directly push to Archive
+                    archivedTasks.push({ subject: subjectName, task: completedTask });
+                    
+                    // Clean up subject card if no remaining tasks
+                    if (courseTasks[courseIndex].activities.length === 0) {
+                        courseTasks.splice(courseIndex, 1);
+                    }
+                    
+                    localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
+                    localStorage.setItem('citeArchiveData', JSON.stringify(archivedTasks));
+                    
+                    renderTasks();
+                }
+            }
+        }
+
         // --- RENDER TASKS LOGIC ---
         function renderTasks() {
             taskContainer.innerHTML = ''; 
@@ -686,26 +811,24 @@
                     let actionHtml = '';
                     let textDecoration = '';
                     let opacity = '1';
+                    let rowClass = '';
                     
-                    // Logic: Appears ONLY 2 hours after the deadline, else wait message.
-                    if (task.completed) {
-                        timeLeftLabel = `<span style="color: var(--success); font-weight: 900;">COMPLETED</span>`;
-                        actionHtml = `<span style="color: gray; font-size: 0.8rem;">Done</span>`;
-                        textDecoration = 'line-through';
-                        opacity = '0.6';
-                    } else if (task.deadline === "TBA") {
-                        actionHtml = `<span style="color: gray; font-size: 0.8rem;">Pending Deadline</span>`;
+                    const safeSubject = course.subject.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    const safeTaskName = task.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+                    if (task.deadline === "TBA") {
+                        actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
+                        rowClass = 'highlight-tba'; 
                     } else {
                         const targetDate = new Date(task.deadline);
                         const now = new Date();
-                        const diff = now - targetDate; // Positive if current time is past the deadline
-                        const twoHoursInMillis = 2 * 60 * 60 * 1000;
+                        const oneDayInMillis = 24 * 60 * 60 * 1000;
                         
-                        if (diff >= twoHoursInMillis) {
-                            actionHtml = `<button class="btn-complete" onclick="markComplete('${course.subject}', '${task.name}')">Complete</button>`;
-                        } else {
-                            actionHtml = `<span style="color: gray; font-size: 0.8rem;">On Process</span>`;
+                        if (targetDate - now > 0 && targetDate - now <= oneDayInMillis) {
+                            rowClass = 'highlight-near'; 
                         }
+
+                        actionHtml = `<button class="btn-complete" onclick="markCompleteAndArchive('${safeSubject}', '${safeTaskName}')">Complete</button>`;
                     }
                     
                     let formattedDate = task.deadline;
@@ -717,7 +840,16 @@
                     }
 
                     tableRows += `
-                        <tr style="opacity: ${opacity};">
+                        <tr class="${rowClass}" style="opacity: ${opacity}; cursor: pointer; transition: background-color 0.3s;" title="Double-click to view details | Long-press to archive"
+                            ondblclick="showTaskDescription(event, '${safeSubject}', '${safeTaskName}')"
+                            onmousedown="handlePointerDown(event, '${safeSubject}', '${safeTaskName}')" 
+                            onmouseup="handlePointerUp()" 
+                            onmouseleave="handlePointerUp()" 
+                            onmousemove="handlePointerUp()"
+                            ontouchstart="handlePointerDown(event, '${safeSubject}', '${safeTaskName}')" 
+                            ontouchend="handlePointerUp()"
+                            ontouchmove="handlePointerUp()"
+                            ontouchcancel="handlePointerUp()">
                             <td style="width: 35%; text-decoration: ${textDecoration};">${task.name}</td>
                             <td>${formattedDate}</td>
                             <td>${timeLeftLabel}</td>
@@ -770,9 +902,47 @@
             document.getElementById('action-modal').style.display = 'flex';
         }
 
+        function openArchiveModal() {
+            closeAllModals();
+            renderArchives();
+            document.getElementById('archive-modal').style.display = 'flex';
+        }
+
+        function renderArchives() {
+            const container = document.getElementById('archive-container');
+            if (archivedTasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: gray; font-size: 0.9rem;">No archived tasks found.</p>';
+                return;
+            }
+            
+            let html = '<table class="task-table" style="font-size: 0.85rem;"><thead><tr><th>Subject</th><th>Activity</th><th>Date Archived</th></tr></thead><tbody>';
+            archivedTasks.forEach(item => {
+                const dateArchivedStr = (item.task && item.task.dateArchived) || item.dateArchived || new Date().toISOString();
+                const dateObj = new Date(dateArchivedStr);
+                const formattedDate = !isNaN(dateObj) 
+                    ? dateObj.toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                    : 'Unknown Date';
+
+                const taskName = item.task ? item.task.name : 'Unknown Task';
+                html += `<tr><td>${item.subject}</td><td>${taskName}</td><td>${formattedDate}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function clearArchives() {
+            if (archivedTasks.length === 0) return;
+            if (confirm("Are you sure you want to permanently clear all archived tasks?")) {
+                archivedTasks = [];
+                localStorage.setItem('citeArchiveData', JSON.stringify(archivedTasks));
+                renderArchives();
+            }
+        }
+
         function openAddTaskModal() {
             closeAllModals();
             document.getElementById('task-activity').value = '';
+            document.getElementById('task-description').value = '';
             document.getElementById('task-deadline').value = '';
             document.getElementById('task-deadline').disabled = false;
             document.getElementById('task-tba-check').checked = false;
@@ -823,11 +993,12 @@
             }
         }
 
-        // --- ADD, COMPLETE, UPDATE & DELETE TASK LOGIC ---
+        // --- ADD, UPDATE & DELETE TASK LOGIC ---
         function saveNewTask() {
             const subjectKey = document.getElementById('task-subject').value;
             const instructor = instructorMap[subjectKey];
             const activityName = document.getElementById('task-activity').value;
+            const activityDesc = document.getElementById('task-description').value;
             const isTba = document.getElementById('task-tba-check').checked;
             const deadline = isTba ? "TBA" : document.getElementById('task-deadline').value;
 
@@ -836,33 +1007,28 @@
                 return;
             }
 
+            const newTaskObj = {
+                name: activityName,
+                description: activityDesc,
+                deadline: deadline,
+                completed: false
+            };
+
             const existingCourseIndex = courseTasks.findIndex(c => c.subject === subjectKey);
 
             if (existingCourseIndex !== -1) {
-                courseTasks[existingCourseIndex].activities.push({ name: activityName, deadline: deadline, completed: false });
+                courseTasks[existingCourseIndex].activities.push(newTaskObj);
             } else {
                 courseTasks.push({
                     subject: subjectKey,
                     instructor: instructor,
-                    activities: [{ name: activityName, deadline: deadline, completed: false }]
+                    activities: [newTaskObj]
                 });
             }
 
             localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
             renderTasks();
             closeAllModals();
-        }
-
-        function markComplete(subjectName, taskName) {
-            const courseIndex = courseTasks.findIndex(c => c.subject === subjectName);
-            if (courseIndex > -1) {
-                const taskIndex = courseTasks[courseIndex].activities.findIndex(t => t.name === taskName);
-                if (taskIndex > -1) {
-                    courseTasks[courseIndex].activities[taskIndex].completed = true;
-                    localStorage.setItem('citeTasksData', JSON.stringify(courseTasks));
-                    renderTasks();
-                }
-            }
         }
 
         function updateSingleTba() {
@@ -878,7 +1044,6 @@
                 return;
             }
             
-            // Extract the indexes stored in the option value
             const [courseIndex, taskIndex] = selectedTaskValue.split('-');
             
             if (courseTasks[courseIndex] && courseTasks[courseIndex].activities[taskIndex]) {
